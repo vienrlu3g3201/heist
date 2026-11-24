@@ -17,7 +17,7 @@ jobs:
           echo "$LIST" | while read -r l; do
             FUID=$(echo "$l" | cut -d'|' -f1)
             FTOKEN=$(echo "$l" | cut -d'|' -f2)
-            echo "{\"uuid\":\"$FUID\",\"token\":\"$FTOKEN\"}," >> matrix.json
+            echo -n "{\"uuid\":\"$FUID\",\"token\":\"$FTOKEN\"}," >> matrix.json
           done
           sed -i '$ s/,$//' matrix.json
           echo -n ']' >> matrix.json
