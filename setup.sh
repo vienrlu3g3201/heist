@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir -p /etc/forgejo-runner
 cat << EOF >/etc/forgejo-runner/config.yaml
 log:
   level: info
