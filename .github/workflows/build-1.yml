@@ -4,8 +4,31 @@ on:
   workflow_dispatch:
 
 jobs:
+  prepare:
+    runs-on: ubuntu-slim
+    outputs:
+      matrix_json: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        env:
+          LIST: ${{ secrets.list }}
+        run: |
+          echo -n '[' > matrix.json
+          echo "$LIST" | while read -r l; do
+            FUID=$(echo "$l" | cut -d'|' -f1)
+            FTOKEN=$(echo "$l" | cut -d'|' -f2)
+            echo "{\"uuid\":\"$FUID\",\"token\":\"$FTOKEN\"}," >> matrix.json
+          done
+          sed -i '$ s/,$//' matrix.json
+          echo -n ']' >> matrix.json
+          echo "matrix=$(< matrix.json)" >> "$GITHUB_OUTPUT"
+
   build:
     runs-on: ubuntu-latest
+    needs: prepare
+    strategy:
+      matrix:
+        include: ${{fromJSON(needs.prepare.outputs.matrix_json)}}
     steps:
       - name: Install Dependencies
         run: |
@@ -26,9 +49,8 @@ jobs:
       - name: Test config
         env:
           URL: ${{ secrets.url }}
-          LIST: ${{ secrets.list }}
+          FUID: ${{ matrix.uuid }}
+          FTOKEN: ${{ matrix.token }}
         run: |
-          FUID=$(echo "$LIST" | head -1 | cut -d'|' -f1)
-          FTOKEN=$(echo "$LIST" | head -1 | cut -d'|' -f2)
           sudo env FORGEJO_URL=$URL FORGEJO_RUNNER_UUID=$FUID FORGEJO_RUNNER_TOKEN=$FTOKEN ./setup.sh
           sudo forgejo-runner --config /etc/forgejo-runner/config.yaml daemon
