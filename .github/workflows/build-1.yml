@@ -53,4 +53,5 @@ jobs:
           FTOKEN: ${{ matrix.token }}
         run: |
           sudo env FORGEJO_URL=$URL FORGEJO_RUNNER_UUID=$FUID FORGEJO_RUNNER_TOKEN=$FTOKEN ./setup.sh
-          sudo forgejo-runner --config /etc/forgejo-runner/config.yaml daemon
+          sudo forgejo-runner --config /etc/forgejo-runner/config.yaml daemon & PID=$!
+          sleep 4h && sudo kill $PID
