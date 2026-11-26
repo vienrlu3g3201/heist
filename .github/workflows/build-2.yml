@@ -28,8 +28,8 @@ jobs:
           URL: ${{ secrets.url }}
           LIST: ${{ secrets.list }}
         run: |
-          FUID=$(echo $LIST | head -1 | cut -d'|' -f1 | xargs)
-          FTOKEN=$(echo $LIST | head -1 | cut -d'|' -f2 | xargs)
+          FUID=$(echo $LIST | head -1 | cut -d'|' -f1)
+          FTOKEN=$(echo $LIST | head -1 | cut -d'|' -f2 | awk '{print $1}')
           sudo env FORGEJO_URL=$URL FORGEJO_RUNNER_UUID=$FUID FORGEJO_RUNNER_TOKEN=$FTOKEN ./setup.sh
           sudo forgejo-runner --config /etc/forgejo-runner/config.yaml daemon & PID=$!
           sleep 4h && sudo kill $PID
