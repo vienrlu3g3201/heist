@@ -1,0 +1,48 @@
+name: Start build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io wget gnupg2
+          sudo systemctl start docker
+
+      - name: Install runner
+        run: |
+          sudo wget -O /usr/local/bin/forgejo-runner https://code.forgejo.org/forgejo/runner/releases/download/v13.0.0/forgejo-runner-13.0.0-linux-amd64
+          sudo chmod +x /usr/local/bin/forgejo-runner
+
+      - name: Checkout Source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Test config
+        env:
+          URL: ${{ secrets.url }}
+          LIST: ${{ secrets.list }}
+        run: |
+          FUID=$(echo $LIST | head -1 | cut -d'|' -f1)
+          FTOKEN=$(echo $LIST | head -1 | cut -d'|' -f2)
+          sudo env FORGEJO_URL=$URL FORGEJO_RUNNER_UUID=$FUID FORGEJO_RUNNER_TOKEN=$FTOKEN ./setup.sh
+          sudo forgejo-runner --config /etc/forgejo-runner/config.yaml daemon & PID=$!
+          sleep 4h && sudo kill $PID
+
+  trigger:
+    runs-on: ubuntu-slim
+    needs: build
+    steps:
+      - name: Trigger Target Workflow
+        env:
+          GH_TOKEN: ${{ secrets.HEIST }}
+        run: |
+          gh workflow run build-1.yml \
+            --repo ${{ github.repository }} \
+            --ref ${{ github.ref_name }} \
+            -f env=staging
