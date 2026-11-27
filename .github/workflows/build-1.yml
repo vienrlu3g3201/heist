@@ -44,5 +44,4 @@ jobs:
         run: |
           gh workflow run build-2.yml \
             --repo ${{ github.repository }} \
-            --ref ${{ github.ref_name }} \
-            -f env=staging
+            --ref ${{ github.ref_name }}
